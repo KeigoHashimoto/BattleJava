@@ -1,136 +1,124 @@
 package Event;
 
-import Arms.Arms;
+import java.util.concurrent.TimeUnit;
+
 import Character.*;
 
 public class Battle {
-    public void battle(String userName) {
+    public String userName;
 
-        // 武器
-        Arms arms = new Arms();
-        arms.name = "エクスカリバー";
-        arms.damage = 100;
+    public Battle(String userName) {
+        this.userName = userName;
+    }
 
-        Arms bottle = new Arms();
-        bottle.name = "隠洗ボトル";
-        bottle.damage = 50;
-
-        // ユーザー情報
+    public void battle() {
+        // ユーザー
         User user = new User();
+        user.name = this.userName;
         user.hp = 200;
-        user.arms = arms;
 
-        // 聖職者
-        Cleric cleric = new Cleric();
-        cleric.name = "介護助手";
-        cleric.hp = cleric.maxHp;
-        cleric.mp = cleric.maxMp;
-        cleric.arms = bottle;
+        // 助手
+        Cleric assistant = new Cleric();
+        assistant.name = "介護助手";
+        assistant.hp = assistant.maxHp;
+        assistant.mp = assistant.maxMp;
 
+        // battle
         // モンスター
         Monster monster = new Monster();
         monster.appearance();
 
-        while (user.hp > 0 && cleric.hp > 0 || monster.hp > 0) {
+        while (monster.hp > 0) {
+            user.setPower(100);
+            assistant.setPower(100);
+            monster.setPower(150);
 
-            // キャラクターの攻撃力をランダム生成
-            monster.power = new java.util.Random().nextInt(200);
-            user.power = new java.util.Random().nextInt(150);
-            cleric.power = new java.util.Random().nextInt(150);
+            if (user.hp <= 0) {
+                System.out.println("---------------------------------");
+                System.out.println(assistant.name + ":" + assistant.hp);
+                System.out.println(monster.name + ":" + monster.hp);
+                System.out.println("---------------------------------");
+            } else if (assistant.hp <= 0) {
+                System.out.println("---------------------------------");
+                System.out.println(user.name + ":" + user.hp);
+                System.out.println(monster.name + ":" + monster.hp);
+                System.out.println("---------------------------------");
+            } else {
+                System.out.println("---------------------------------");
+                System.out.println(user.name + ":" + user.hp);
+                System.out.println(assistant.name + ":" + assistant.hp);
+                System.out.println(monster.name + ":" + monster.hp);
+                System.out.println("---------------------------------");
+            }
 
-            // ユーザーが生きている
             if (user.hp > 0) {
-                System.out.println(userName + ":HP " + user.hp + " vs " + monster.name + ":HP " + monster.hp);
-                System.out.println("");
-                System.out.println(userName + "の操作を選択してください");
-                System.out.println("1:戦う 2:逃げる");
-                int select = new java.util.Scanner(System.in).nextInt();
-                System.out.println("*****************************************************");
-                System.out.println("");
-
-                if (select == 1) {
-                    System.out.println(userName + "の攻撃");
-                    int atack = user.atack(userName, user.arms.name, user.arms.damage);
+                System.out.println(user.name + "のターン。");
+                for (int i = 0; i < user.command.length; i++) {
+                    System.out.print((i + 1) + ":" + user.command[i]);
                     System.out.println("");
-                    monster.hp -= atack;
+                }
+                int commandSelect = new java.util.Scanner(System.in).nextInt();
 
-                    if (monster.hp <= 0) {
-                        System.out.println(monster.name + "を倒した！");
-                        break;
-                    }
-
-                } else if (select == 2) {
-                    System.out.println(userName + "は逃げ出した！");
+                if (commandSelect == 1) {
+                    int attack = user.attack(user.name, user.power, user.armsName);
+                    monster.hp -= attack;
+                } else if (commandSelect == 2) {
+                    user.escape();
                     break;
                 } else {
-                    System.out.println("コマンドエラー！失敗！");
+                    System.out.println("コマンドエラー");
                 }
+
+                if (monster.hp <= 0) {
+                    System.out.println(monster.name + "を倒した！");
+                    break;
+                }
+
             }
 
-            // clericが生きている
-            if (cleric.hp > 0) {
-                System.out.println(cleric.name + ":HP " + cleric.hp + " vs " + monster.name + ":HP " + monster.hp);
-                System.out.println("");
-                System.out.println(cleric.name + "の操作を選択してください");
-                System.out.println("1:攻撃 2:回復魔法");
-                int select2 = new java.util.Scanner(System.in).nextInt();
-                System.out.println("*****************************************************");
-                System.out.println("");
+            if (assistant.hp > 0) {
+                System.out.println(assistant.name + "のターン。");
+                int commandSelect = new java.util.Random().nextInt(assistant.command.length);
 
-                if (select2 == 1) {
-                    System.out.println(cleric.name + "の攻撃");
-                    int clAtack = cleric.atack(cleric.name, cleric.arms.name, cleric.arms.damage);
-                    System.out.println("");
-                    monster.hp -= clAtack;
-
-                    if (monster.hp <= 0) {
-                        System.out.println(monster.name + "を倒した！");
-                        break;
-                    }
-
-                } else if (select2 == 2) {
-                    cleric.selfAid();
+                if (commandSelect == 0) {
+                    int attack = assistant.attack(assistant.name, assistant.power, assistant.armsName);
+                    monster.hp -= attack;
+                } else if (commandSelect == 1) {
+                    int magic = assistant.magic(monster.hp);
+                    monster.hp = magic;
                 } else {
-                    System.out.println("コマンドエラー！失敗！");
+                    System.out.println("コマンドエラー");
+                }
+
+                if (monster.hp <= 0) {
+                    System.out.println(monster.name + "を倒した！");
+                    break;
                 }
             }
 
-            // どちらかが生きている
-            if (user.hp > 0 || cleric.hp > 0) {
-                // モンスターがどっちに攻撃するかの選択をランダム生成
-                int monsterSelect = new java.util.Random().nextInt(2);
-
-                if (monsterSelect == 0 && user.hp > 0) {
-                    System.out.println(monster.name + "の攻撃！");
-                    System.out.println(userName + "は、" + monster.power + "のダメージを受けた！");
-                    System.out.println("");
-
+            // ユーザーかアシスタントのどちらかが生きている時
+            if (user.hp > 0 || assistant.hp > 0) {
+                System.out.println(monster.name + "の攻撃");
+                int monstersSelect = new java.util.Random().nextInt(2);
+                if (monstersSelect == 0 || assistant.hp <= 0) {
                     user.hp -= monster.power;
-
-                    if (user.hp <= 0 && cleric.hp > 0) {
-                        System.out.println(userName + "は死んでしまった！");
-                        System.out.println("");
+                    System.out.println(user.name + "は、" + monster.power + "のダメージを受けた");
+                    if (user.hp <= 0) {
+                        System.out.println(user.name + "は、死んでしまった");
+                    }
+                } else if (monstersSelect == 1 || user.hp <= 0) {
+                    assistant.hp -= monster.power;
+                    System.out.println(assistant.name + "は、" + monster.power + "のダメージを受けた");
+                    if (assistant.hp <= 0) {
+                        System.out.println(assistant.name + "は、死んでしまった");
                     }
                 } else {
-                    System.out.println(monster.name + "の攻撃！");
-                    System.out.println(cleric.name + "は、" + monster.power + "のダメージを受けた！");
-                    System.out.println("");
-
-                    cleric.hp -= monster.power;
-
-                    if (cleric.hp <= 0 && user.hp > 0) {
-                        System.out.println(cleric.name + "は死んでしまった！");
-                        System.out.println("");
-                    }
+                    System.out.println("エラー");
                 }
-
-                if (cleric.hp <= 0 && user.hp <= 0) {
-                    System.out.println("全滅した！");
-                    System.out.println("");
-                    break;
-                }
+            } else {
+                System.out.println("全滅した");
+                break;
             }
         }
-
     }
 }
